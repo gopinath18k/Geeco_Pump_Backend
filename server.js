@@ -16,9 +16,12 @@ const app=express();
 app.use(express.json());
 app.use(cors());
 
+// Load Environment Variables
+require("dotenv").config();
+
 // Connect MongoDB
 
-mongoose.connect("mongodb://localhost:27017/pump-warranty")
+mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/pump-warranty")
 .then(()=>{
     console.log("DB Connected")
 }).catch((err)=>{
@@ -32,22 +35,23 @@ const pumpwarrantyschema=new mongoose.Schema({
         required:true,
         type:String
     },
-    pumpModel:String
+    pumpModel:String,
+    invoiceNo:String,
+    invoiceDate:String,
+    warrantyYear:String,
+    warrantyExpiry:String
 })
 
-// After Declered Schema 
-// Create MondoDB Model
-// store the Model to new Variable
+
 const pumpwarrantyModel=mongoose.model("PumpWarranty",pumpwarrantyschema)
 
-//Push The Data From Postman to MongoDB
-//Create New Data
+
 
 app.post('/pumpwarranty',async(req,res)=>{
-    const {pumpName,pumpModel}=req.body;
+    const {pumpName,pumpModel,invoiceNo,invoiceDate,warrantyYear,warrantyExpiry}=req.body;
     
     try{
-        const newPumpWarranty =new pumpwarrantyModel({pumpName,pumpModel});
+        const newPumpWarranty =new pumpwarrantyModel({pumpName,pumpModel,invoiceNo,invoiceDate,warrantyYear,warrantyExpiry});
         await newPumpWarranty.save();
         res.status(201).json(newPumpWarranty)
     }catch(error){
@@ -73,15 +77,15 @@ app.get("/pumpwarranty",async (req,res)=>{
 
 app.put("/pumpwarranty/:id",async (req,res)=>{
     try{
-        const {pumpName,pumpModel}=req.body;
+        const {pumpName,pumpModel,invoiceNo,invoiceDate,warrantyYear,warrantyExpiry}=req.body;
         const id=req.params.id;
         const updatedPumpWarranty=await pumpwarrantyModel.findByIdAndUpdate(
             id,
-            {pumpName,pumpModel},
+            {pumpName,pumpModel,invoiceNo,invoiceDate,warrantyYear,warrantyExpiry},
             {new:true}
         )
         if(!updatedPumpWarranty){
-            return res.status(404).json({message:"UpdatedP Pump Warramty Not Found"})
+            return res.status(404).json({message:"Updated Pump Warranty Not Found"})
         }
         res.json(updatedPumpWarranty)
 
@@ -106,8 +110,8 @@ app.delete("/pumpwarranty/:id",async(req,res)=>{
 
 // Start The Server
 
-const port =8000;
+const port = process.env.PORT || 8000;
 
 app.listen(port,()=>{
-    console.log("Server is listenting to port"+port)
+    console.log("Server is listenting to port "+port)
 })
